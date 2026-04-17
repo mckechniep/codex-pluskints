@@ -1,0 +1,17 @@
+README.md
+pyproject.toml
+src/codex_profile_manager/__init__.py
+src/codex_profile_manager/__main__.py
+src/codex_profile_manager/cli.py
+src/codex_profile_manager/config.py
+src/codex_profile_manager/discovery.py
+src/codex_profile_manager/models.py
+src/codex_profile_manager/operations.py
+src/codex_profile_manager/profiles.py
+src/codex_profile_manager/tui.py
+src/codex_profile_manager.egg-info/PKG-INFO
+src/codex_profile_manager.egg-info/SOURCES.txt
+src/codex_profile_manager.egg-info/dependency_links.txt
+src/codex_profile_manager.egg-info/entry_points.txt
+src/codex_profile_manager.egg-info/requires.txt
+src/codex_profile_manager.egg-info/top_level.txt

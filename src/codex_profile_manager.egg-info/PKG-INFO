@@ -1,0 +1,132 @@
+Metadata-Version: 2.4
+Name: codex-profile-manager
+Version: 0.1.0
+Summary: Manage Codex skill and plugin profiles for future sessions.
+Requires-Python: >=3.11
+Description-Content-Type: text/markdown
+Requires-Dist: rich>=13.7.0
+Requires-Dist: textual>=0.82.0
+Requires-Dist: tomlkit>=0.12.5
+Requires-Dist: typer>=0.12.3
+
+# codex-profile-manager
+
+Terminal profile manager for Codex that prepares the next session by enabling and disabling:
+
+- user-installed skills under `~/.agents/skills`
+- Codex plugins declared in `~/.codex/config.toml`
+
+This project does not try to mutate the current live Codex session. It updates on-disk state and prints a reminder to start a new session.
+
+## What It Does
+
+- Discovers installed and active skills from:
+  - `~/.agents/.skill-lock.json`
+  - `~/.agents/skills`
+  - `~/.agents/skills.disabled`
+- Discovers plugin state from:
+  - `~/.codex/config.toml`
+- Saves named profiles for skill and plugin selections
+- Applies profiles with a dry-run diff first if desired
+- Backs up and restores current state
+- Provides:
+  - a CLI
+  - a Textual TUI
+
+## Install
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -e .
+```
+
+The package exposes `codex-prof`.
+
+## Quick Start
+
+```bash
+codex-prof status
+codex-prof list
+codex-prof profile diff minimal
+codex-prof profile apply minimal --dry-run
+codex-prof tui
+```
+
+## Default Config
+
+On first run the app creates:
+
+`~/.config/codex-profile-manager/config.json`
+
+Example:
+
+```json
+{
+  "skills_dir": "/home/you/.agents/skills",
+  "disabled_dir": "/home/you/.agents/skills.disabled",
+  "skill_lock_path": "/home/you/.agents/.skill-lock.json",
+  "codex_config_path": "/home/you/.codex/config.toml",
+  "profiles": {
+    "minimal": {
+      "enabled_skills": ["find-skills"],
+      "enabled_plugins": []
+    },
+    "coding": {
+      "enabled_skills": ["supabase", "supabase-postgres-best-practices"],
+      "enabled_plugins": [
+        "github@openai-curated",
+        "build-web-apps@openai-curated",
+        "vercel@openai-curated"
+      ]
+    },
+    "full": {
+      "enabled_skills": ["*"],
+      "enabled_plugins": ["*"]
+    }
+  }
+}
+```
+
+## CLI
+
+```bash
+codex-prof list
+codex-prof status
+codex-prof doctor
+
+codex-prof enable supabase
+codex-prof disable find-skills
+
+codex-prof enable github@openai-curated --kind plugin
+codex-prof disable vercel@openai-curated --kind plugin
+
+codex-prof profile diff coding
+codex-prof profile apply coding
+codex-prof profile save web-work
+
+codex-prof backup
+codex-prof restore backup.json --dry-run
+
+codex-prof tui
+```
+
+## TUI
+
+The TUI is built with Textual.
+
+- `Tab` / `Shift+Tab`: move focus
+- arrow keys: move selection
+- `Enter`: load selected profile
+- `Space`: toggle selected skill or plugin
+- `a`: apply pending changes
+- `d`: show dry-run preview
+- `s`: save current working selection as a profile
+- `r`: reload from disk
+- `q`: quit
+
+## Notes
+
+- Skills are never deleted. They move between active and disabled directories.
+- Plugin state is updated in `~/.codex/config.toml` by editing existing `[plugins."..."]` blocks.
+- After a successful apply, start a new Codex session for changes to take effect.
