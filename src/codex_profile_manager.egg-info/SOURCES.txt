@@ -5,6 +5,7 @@ src/codex_profile_manager/__main__.py
 src/codex_profile_manager/cli.py
 src/codex_profile_manager/config.py
 src/codex_profile_manager/discovery.py
+src/codex_profile_manager/footprint.py
 src/codex_profile_manager/models.py
 src/codex_profile_manager/operations.py
 src/codex_profile_manager/profiles.py

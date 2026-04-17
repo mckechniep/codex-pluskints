@@ -17,6 +17,7 @@ dependencies = [
 
 [project.scripts]
 codex-prof = "codex_profile_manager.cli:app"
+pluskints = "codex_profile_manager.cli:app"
 
 [tool.setuptools]
 package-dir = {"" = "src"}

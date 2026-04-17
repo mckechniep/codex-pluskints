@@ -13,7 +13,7 @@ from .tui import run_tui
 
 app = typer.Typer(
     no_args_is_help=True,
-    help="Manage Codex skill and plugin profiles for the next Codex session.",
+    help="Manage Codex skill and plugin profiles for the next Codex session. Preferred command: pluskints.",
 )
 profile_app = typer.Typer(help="Inspect, save, and apply named skill/plugin profiles.")
 app.add_typer(profile_app, name="profile")
@@ -219,7 +219,7 @@ def footprint(
     )
 
 
-@app.command(help="Enable a skill or plugin and show the resulting change plan.")
+@app.command(help="Enable a skill or plugin in the current on-disk state. Does not update saved profiles.")
 def enable(
     name: str,
     kind: str = typer.Option("auto", help="One of: auto, skill, plugin."),
@@ -237,7 +237,7 @@ def enable(
         restart_note()
 
 
-@app.command(help="Disable a skill or plugin and show the resulting change plan.")
+@app.command(help="Disable a skill or plugin in the current on-disk state. Does not update saved profiles.")
 def disable(
     name: str,
     kind: str = typer.Option("auto", help="One of: auto, skill, plugin."),
@@ -269,7 +269,7 @@ def profile_diff(
     console.print(manager.render_plan(plan))
 
 
-@profile_app.command("apply", help="Apply a named profile to skills and plugins.")
+@profile_app.command("apply", help="Apply a named profile to the current on-disk state. Use --dry-run to preview only.")
 def profile_apply(
     name: str,
     dry_run: bool = typer.Option(False, "--dry-run"),
@@ -372,7 +372,7 @@ def backup(
     console.print(f"Backup written to {path}")
 
 
-@app.command(help="Restore skills and plugins from a saved JSON snapshot.")
+@app.command(help="Restore skills and plugins from a saved JSON snapshot. Use --dry-run to preview only.")
 def restore(
     snapshot_path: Path,
     dry_run: bool = typer.Option(False, "--dry-run"),

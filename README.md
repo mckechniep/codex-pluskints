@@ -1,4 +1,4 @@
-# codex-profile-manager
+# Pluskints
 
 Terminal profile manager for Codex that prepares the next session by enabling and disabling:
 
@@ -6,6 +6,11 @@ Terminal profile manager for Codex that prepares the next session by enabling an
 - Codex plugins declared in `~/.codex/config.toml`
 
 This project does not try to mutate the current live Codex session. It updates on-disk state and prints a reminder to start a new session.
+
+`Pluskints` stands for Plugins + Skills. It manages:
+
+- the current saved on-disk state that the next Codex session will read
+- named profiles that act as reusable templates
 
 ## What It Does
 
@@ -30,16 +35,19 @@ source .venv/bin/activate
 pip install -e .
 ```
 
-The package exposes `codex-prof`.
+The package exposes:
+
+- `pluskints` as the primary command
+- `codex-prof` as a compatibility alias
 
 ## Quick Start
 
 ```bash
-codex-prof status
-codex-prof list
-codex-prof profile diff minimal
-codex-prof profile apply minimal --dry-run
-codex-prof tui
+pluskints status
+pluskints list
+pluskints profile diff minimal
+pluskints profile apply minimal --dry-run
+pluskints tui
 ```
 
 ## Default Config
@@ -77,35 +85,109 @@ Example:
 }
 ```
 
+## State Model
+
+There are two separate things in Pluskints:
+
+1. Current on-disk state
+
+- This is what lives in:
+  - `~/.agents/skills`
+  - `~/.agents/skills.disabled`
+  - `~/.codex/config.toml`
+- This is what the next Codex session will actually use.
+
+2. Saved profiles
+
+- These live in:
+  - `~/.config/codex-profile-manager/config.json`
+- A profile is just a saved template of which skills and plugins should be enabled.
+
+The important consequence:
+
+- `pluskints enable ...` and `pluskints disable ...` change the current on-disk state immediately.
+- They do not edit any saved profile.
+- `pluskints profile apply <name>` takes a saved profile and makes the on-disk state match it.
+- `pluskints profile save`, `profile create`, `profile add`, `profile remove`, and `profile delete` only edit saved profiles.
+
+Example:
+
+- `pluskints disable supabase` disables `supabase` on disk for the next session.
+- It does not remove `supabase` from your `coding` profile.
+- If `coding` still includes `supabase`, then `pluskints profile apply coding` will enable it again.
+
+## Dry Run
+
+`--dry-run` means preview only.
+
+When you use `--dry-run`, Pluskints:
+
+- computes the exact skill moves and plugin flips it would make
+- prints the plan
+- does not move any folders
+- does not edit `~/.codex/config.toml`
+- does not change saved profiles
+
+Use it before:
+
+- `pluskints enable ...`
+- `pluskints disable ...`
+- `pluskints profile apply ...`
+- `pluskints restore ...`
+
 ## CLI
 
 ```bash
-codex-prof list
-codex-prof status
-codex-prof doctor
-codex-prof footprint
-codex-prof footprint --show-files
+pluskints list
+pluskints status
+pluskints doctor
+pluskints footprint
+pluskints footprint --show-files
 
-codex-prof enable supabase
-codex-prof disable find-skills
+pluskints enable supabase
+pluskints disable find-skills
 
-codex-prof enable github@openai-curated --kind plugin
-codex-prof disable vercel@openai-curated --kind plugin
+pluskints enable github@openai-curated --kind plugin
+pluskints disable vercel@openai-curated --kind plugin
 
-codex-prof profile diff coding
-codex-prof profile apply coding
-codex-prof profile save web-work
-codex-prof profile create backend --from-current
-codex-prof profile add backend supabase --kind skill
-codex-prof profile add backend github@openai-curated --kind plugin
-codex-prof profile remove backend find-skills --kind skill
-codex-prof profile delete backend
+pluskints profile diff coding
+pluskints profile apply coding
+pluskints profile apply coding --dry-run
+pluskints profile save web-work
+pluskints profile create backend --from-current
+pluskints profile add backend supabase --kind skill
+pluskints profile add backend github@openai-curated --kind plugin
+pluskints profile remove backend find-skills --kind skill
+pluskints profile delete backend
 
-codex-prof backup
-codex-prof restore backup.json --dry-run
+pluskints backup
+pluskints restore backup.json --dry-run
 
-codex-prof tui
+pluskints tui
 ```
+
+Command behavior:
+
+- `pluskints enable ...` and `pluskints disable ...`
+  - change the current on-disk state
+  - do not update saved profiles
+- `pluskints profile diff <name>`
+  - previews what applying that saved profile would change
+  - does not write anything
+- `pluskints profile apply <name>`
+  - makes the on-disk state match that saved profile
+- `pluskints profile save <name>`
+  - saves the currently active on-disk state as a profile
+- `pluskints profile create <name>`
+  - creates a new profile, optionally from the current active state
+- `pluskints profile add/remove/delete`
+  - edits saved profiles only
+- `pluskints backup` and `pluskints restore`
+  - snapshot and restore the current on-disk state
+- `pluskints footprint`
+  - measures discovered skill and plugin `SKILL.md` files and estimates context size
+- `pluskints tui`
+  - opens the interactive Textual app
 
 ## TUI
 
@@ -136,22 +218,22 @@ Profile editing flow in the TUI:
 Create an empty profile:
 
 ```bash
-codex-prof profile create backend
+pluskints profile create backend
 ```
 
 Create a profile from whatever is currently active:
 
 ```bash
-codex-prof profile create backend --from-current
+pluskints profile create backend --from-current
 ```
 
 Add or remove items later:
 
 ```bash
-codex-prof profile add backend supabase --kind skill
-codex-prof profile add backend github@openai-curated --kind plugin
-codex-prof profile remove backend find-skills --kind skill
-codex-prof profile delete backend
+pluskints profile add backend supabase --kind skill
+pluskints profile add backend github@openai-curated --kind plugin
+pluskints profile remove backend find-skills --kind skill
+pluskints profile delete backend
 ```
 
 ## Footprint Estimates
@@ -159,19 +241,21 @@ codex-prof profile delete backend
 You can estimate the current skill and plugin footprint with:
 
 ```bash
-codex-prof footprint
-codex-prof footprint --show-files
+pluskints footprint
+pluskints footprint --show-files
 ```
 
-The estimate counts discovered `SKILL.md` files for:
+The estimate counts discovered `SKILL.md` files for all discovered items, not just the active ones:
 
-- active user-installed skills under `~/.agents/skills`
-- enabled plugin skills under the Codex plugin cache
+- user-installed skills under `~/.agents/skills` and `~/.agents/skills.disabled`
+- configured plugins under the Codex plugin cache
 
-It reports bytes, lines, and a coarse estimated token count. This is an upper-bound style estimate, not an exact measurement of what Codex will send on every turn.
+It reports bytes, lines, and a coarse estimated token count, plus active/enabled status. This is an upper-bound style estimate, not an exact measurement of what Codex will send on every turn.
 
 ## Notes
 
 - Skills are never deleted. They move between active and disabled directories.
 - Plugin state is updated in `~/.codex/config.toml` by editing existing `[plugins."..."]` blocks.
+- `pluskints enable` and `pluskints disable` do not change saved profiles.
+- Use `--dry-run` when you want a preview without changing disk state.
 - After a successful apply, start a new Codex session for changes to take effect.

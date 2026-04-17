@@ -1,2 +1,3 @@
 [console_scripts]
 codex-prof = codex_profile_manager.cli:app
+pluskints = codex_profile_manager.cli:app
